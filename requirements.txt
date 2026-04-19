@@ -1,0 +1,20 @@
+# --- Web Server & API ---
+fastapi
+uvicorn
+jinja2
+python-multipart
+
+# --- Core Data & Vision ---
+numpy
+pandas
+opencv-python
+
+# --- Deep Learning & Face Recognition ---
+tensorflow
+keras
+deepface
+mtcnn
+retina-face
+
+# --- Stability Patches ---
+protobuf
