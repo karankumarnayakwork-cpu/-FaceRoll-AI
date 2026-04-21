@@ -10,3 +10,4 @@ deepface
 mtcnn
 retina-face
 protobuf
+tf-keras
