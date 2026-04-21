@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FaceRoll AI — Biometric Attendance System</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav>
+    <a href="/" class="nav-logo">FACEROLL<span>/AI</span></a>
+    <a href="/live">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
+      Live
+    </a>
+    <a href="/register">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      Register
+    </a>
+    <a href="/attendance">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Attendance
+    </a>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-eyebrow">Biometric Access Control System</div>
+    <h1 class="hero-title">
+      <span class="line1">FACIAL</span>
+      <span class="line2">RECOGNITION</span>
+      <span class="line3">// ATTENDANCE PLATFORM v2.0</span>
+    </h1>
+    <p class="hero-desc">
+      Real-time identity verification with liveness detection. 
+      Zero-contact attendance tracking powered by computer vision.
+    </p>
+    <div class="hero-cta">
+      <a href="/live"><button class="btn-primary btn-cta">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Launch Live System
+      </button></a>
+      <a href="/register"><button class="btn-cta">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Register Face
+      </button></a>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <div class="feature-title">Liveness Detection</div>
+        <div class="feature-desc">Anti-spoofing technology prevents photo or video replay attacks</div>
+      </div>
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <div class="feature-title">Secure Storage</div>
+        <div class="feature-desc">Encrypted face embeddings — no raw image data retained</div>
+      </div>
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <div class="feature-title">Real-time Log</div>
+        <div class="feature-desc">Instant attendance records with timestamp and identity metadata</div>
+      </div>
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <div class="feature-title">Multi-angle Enroll</div>
+        <div class="feature-desc">5-pose registration for high accuracy across lighting conditions</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sys-bar">
+    <div class="sys-item"><div class="sys-dot"></div>SYSTEM ONLINE</div>
+    <div class="sys-item">NODE: PRIMARY</div>
+    <div class="sys-item sys-time" id="sysTime">--:--:--</div>
+  </div>
+
+  <script>
+    function tick() {
+      document.getElementById('sysTime').textContent = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>

@@ -1,38 +1,157 @@
-<!-- static/register.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FaceRoll AI — Register</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <nav>
-    <a href="/">🎭 Live</a>
-    <a href="/register" class="active">➕ Register</a>
-    <a href="/attendance">📋 Attendance</a>
+    <a href="/" class="nav-logo">FACEROLL<span>/AI</span></a>
+    <a href="/live">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
+      Live
+    </a>
+    <a href="/register" class="active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      Register
+    </a>
+    <a href="/attendance">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Attendance
+    </a>
   </nav>
 
-  <div class="container">
-    <h1>Register New Face</h1>
-    <input type="text" id="nameInput" placeholder="Full Name">
-    <input type="text" id="phoneInput" placeholder="Phone Number">
-
-    <video id="video" autoplay playsinline muted></video>
-
-    <div class="progress" id="progress">
-      <div class="dot active" id="dot0"></div>
-      <div class="dot" id="dot1"></div>
-      <div class="dot" id="dot2"></div>
-      <div class="dot" id="dot3"></div>
-      <div class="dot" id="dot4"></div>
+  <div class="container" style="padding-bottom: 3.5rem;">
+    <div class="page-header">
+      <h1>Register New Identity</h1>
+      <p>Multi-angle face enrollment // 5 poses required</p>
     </div>
 
-    <div class="status-box" id="status">Enter name and phone, then capture 5 angles.</div>
+    <div class="register-grid">
+      <!-- LEFT: Form + Progress -->
+      <div>
+        <div class="panel-label" style="margin-bottom: 0.8rem;">Identity Data</div>
 
-    <button id="captureBtn">📸 Capture (C)</button>
-    <button id="submitBtn" disabled>✅ Submit Registration</button>
+        <div class="field-group">
+          <label class="field-label" for="nameInput">Full Name</label>
+          <input type="text" id="nameInput" placeholder="Enter full name">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="phoneInput">Phone Number</label>
+          <input type="text" id="phoneInput" placeholder="Enter phone number">
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="step-indicator">
+          <div class="step-text">Capture progress: <span id="stepText">0 / 5</span></div>
+          <div class="progress">
+            <span class="progress-label">Poses</span>
+            <div class="dot active" id="dot0"></div>
+            <div class="dot" id="dot1"></div>
+            <div class="dot" id="dot2"></div>
+            <div class="dot" id="dot3"></div>
+            <div class="dot" id="dot4"></div>
+          </div>
+        </div>
+
+        <div class="status-box" id="status">
+          Enter identity details, then capture 5 poses.
+        </div>
+
+        <div class="btn-group">
+          <button id="captureBtn" class="btn-primary">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            Capture <span style="opacity:0.5; font-size:0.65rem;">(C)</span>
+          </button>
+          <button id="submitBtn" class="btn-success" disabled>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Submit
+          </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Pose guide -->
+        <div class="panel-label" style="margin-bottom: 0.6rem;">Pose Guide</div>
+        <div style="display: flex; flex-direction: column; gap: 0.4rem;" id="poseList">
+        </div>
+      </div>
+
+      <!-- RIGHT: Camera -->
+      <div>
+        <div class="panel-label">Camera Feed</div>
+        <div class="video-wrap" style="margin-top: 0.4rem;">
+          <div class="video-corner tl"></div>
+          <div class="video-corner tr"></div>
+          <div class="video-corner bl"></div>
+          <div class="video-corner br"></div>
+          <div class="scan-overlay" id="scanOverlay" style="display:none;"></div>
+          <video id="video" autoplay playsinline muted></video>
+        </div>
+
+        <!-- Thumbnail strip -->
+        <div class="panel-label" style="margin-top: 1rem; margin-bottom: 0.5rem;">Captured Frames</div>
+        <div id="thumbStrip" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.4rem;">
+          <div class="thumb-slot" id="thumb0"></div>
+          <div class="thumb-slot" id="thumb1"></div>
+          <div class="thumb-slot" id="thumb2"></div>
+          <div class="thumb-slot" id="thumb3"></div>
+          <div class="thumb-slot" id="thumb4"></div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <div class="sys-bar">
+    <div class="sys-item"><div class="sys-dot" style="background: var(--amber);"></div><span id="camLabel">CAM INIT</span></div>
+    <div class="sys-item" id="poseStatus">POSE: —</div>
+    <div class="sys-item sys-time" id="sysTime">--:--:--</div>
+  </div>
+
+  <style>
+    .thumb-slot {
+      aspect-ratio: 4/3;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .thumb-slot img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb-slot.empty::after {
+      content: '';
+      display: block;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 1px solid var(--border2);
+    }
+    .thumb-slot.done { border-color: var(--cyan2); }
+
+    .pose-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.45rem 0.7rem;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text3);
+      transition: all 0.2s;
+    }
+    .pose-item.active { border-color: var(--amber); color: var(--amber); background: var(--amber-dim); }
+    .pose-item.done { border-color: var(--border); color: var(--text3); }
+    .pose-item.done .pose-check { color: var(--cyan2); }
+    .pose-num { font-size: 0.6rem; opacity: 0.5; min-width: 16px; }
+    .pose-check { margin-left: auto; font-size: 0.7rem; }
+  </style>
 
   <script>
     const video = document.getElementById('video');
@@ -45,28 +164,68 @@
       'Turn slightly LEFT',
       'Turn slightly RIGHT',
       'Tilt slightly UP',
-      'Smile / Neutral'
+      'Neutral or smile'
     ];
 
     const canvas = document.createElement('canvas');
     let captured = [];
     let step = 0;
 
+    function tick() {
+      document.getElementById('sysTime').textContent = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    // Build pose list
+    const poseList = document.getElementById('poseList');
+    instructions.forEach((inst, i) => {
+      const div = document.createElement('div');
+      div.className = 'pose-item' + (i === 0 ? ' active' : '');
+      div.id = `pose${i}`;
+      div.innerHTML = `<span class="pose-num">0${i+1}</span>${inst}<span class="pose-check" id="check${i}"></span>`;
+      poseList.appendChild(div);
+    });
+
+    // Empty thumb slots
+    for (let i = 0; i < 5; i++) {
+      document.getElementById(`thumb${i}`).classList.add('empty');
+    }
+
     navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => { video.srcObject = stream; })
-      .catch(() => { statusBox.textContent = '❌ Camera access denied.'; });
+      .then(stream => {
+        video.srcObject = stream;
+        document.querySelector('.sys-dot').style.background = 'var(--green)';
+        document.getElementById('camLabel').textContent = 'CAM ONLINE';
+      })
+      .catch(() => {
+        statusBox.textContent = 'Camera access denied.';
+        statusBox.className = 'status-box status-unknown';
+        document.querySelector('.sys-dot').style.background = 'var(--red)';
+        document.getElementById('camLabel').textContent = 'CAM ERROR';
+      });
 
     function updateUI() {
+      document.getElementById('stepText').textContent = `${step} / 5`;
       for (let i = 0; i < 5; i++) {
         const dot = document.getElementById(`dot${i}`);
         dot.className = 'dot' + (i < step ? ' done' : i === step ? ' active' : '');
+        const poseEl = document.getElementById(`pose${i}`);
+        if (poseEl) {
+          poseEl.className = 'pose-item' + (i < step ? ' done' : i === step && step < 5 ? ' active' : '');
+          document.getElementById(`check${i}`).textContent = i < step ? '✓' : '';
+        }
       }
       if (step < 5) {
-        statusBox.textContent = `Step ${step + 1}/5: ${instructions[step]}`;
+        statusBox.textContent = `Pose ${step + 1}/5: ${instructions[step]}`;
+        statusBox.className = 'status-box';
+        document.getElementById('poseStatus').textContent = `POSE: ${step + 1}/5`;
       } else {
-        statusBox.textContent = '✅ All 5 captured! Click Submit.';
+        statusBox.textContent = 'All 5 poses captured. Submit to register.';
+        statusBox.className = 'status-box status-recognized';
         captureBtn.disabled = true;
         submitBtn.disabled = false;
+        document.getElementById('poseStatus').textContent = 'POSE: COMPLETE';
       }
     }
 
@@ -79,28 +238,37 @@
 
     captureBtn.onclick = () => {
       if (step >= 5) return;
-      captured.push(captureFrame());
+      const dataUrl = captureFrame();
+      captured.push(dataUrl);
+
+      // Thumbnail
+      const slot = document.getElementById(`thumb${step}`);
+      slot.classList.remove('empty');
+      slot.classList.add('done');
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      slot.innerHTML = '';
+      slot.appendChild(img);
+
       step++;
       updateUI();
     };
 
-    // Also trigger on 'c' key
     document.addEventListener('keydown', e => {
-      if (e.key === 'c' || e.key === 'C') captureBtn.click();
+      if ((e.key === 'c' || e.key === 'C') && !captureBtn.disabled) captureBtn.click();
     });
 
     submitBtn.onclick = async () => {
       const name = document.getElementById('nameInput').value.trim();
       const phone = document.getElementById('phoneInput').value.trim();
-
       if (!name || !phone) {
-        statusBox.textContent = '⚠️ Please enter name and phone first.';
+        statusBox.textContent = 'Name and phone number required.';
+        statusBox.className = 'status-box status-unknown';
         return;
       }
-
       submitBtn.disabled = true;
-      statusBox.textContent = 'Registering...';
-
+      statusBox.textContent = 'Uploading biometric data...';
+      statusBox.className = 'status-box';
       try {
         const res = await fetch('/api/register', {
           method: 'POST',
@@ -109,15 +277,16 @@
         });
         const data = await res.json();
         if (res.ok) {
-          statusBox.textContent = `🎉 ${data.message}`;
+          statusBox.textContent = `Identity registered: ${data.message}`;
           statusBox.className = 'status-box status-recognized';
         } else {
-          statusBox.textContent = `❌ ${data.detail}`;
+          statusBox.textContent = `Registration failed: ${data.detail}`;
           statusBox.className = 'status-box status-unknown';
           submitBtn.disabled = false;
         }
       } catch (e) {
-        statusBox.textContent = '⚠️ Server error';
+        statusBox.textContent = 'Server error. Try again.';
+        statusBox.className = 'status-box status-unknown';
         submitBtn.disabled = false;
       }
     };

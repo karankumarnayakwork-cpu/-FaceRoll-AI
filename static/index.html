@@ -1,24 +1,99 @@
-<!-- static/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FaceRoll AI — Live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FaceRoll AI — Live Recognition</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <nav>
-    <a href="/" class="active">🎭 Live</a>
-    <a href="/register">➕ Register</a>
-    <a href="/attendance">📋 Attendance</a>
+    <a href="/" class="nav-logo">FACEROLL<span>/AI</span></a>
+    <a href="/live" class="active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
+      Live
+    </a>
+    <a href="/register">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      Register
+    </a>
+    <a href="/attendance">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Attendance
+    </a>
   </nav>
 
-  <div class="container">
-    <h1>Live Face Attendance</h1>
-    <video id="video" autoplay playsinline muted></video>
-    <div class="status-box" id="status">Starting camera...</div>
-    <button id="startBtn">Start Recognition</button>
-    <button id="stopBtn" disabled>Stop</button>
+  <div class="container" style="padding-bottom: 3.5rem;">
+    <div class="page-header">
+      <h1>Live Recognition</h1>
+      <p>Real-time biometric identification // 2-second scan interval</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card" id="statCard">
+        <div class="stat-label">Status</div>
+        <div class="stat-value" id="statStatus">IDLE</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Scan Count</div>
+        <div class="stat-value" id="statCount">0</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Recognized</div>
+        <div class="stat-value" id="statRecognized">0</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Unknown</div>
+        <div class="stat-value" id="statUnknown">0</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="panel-label">Camera Feed</div>
+        <div class="video-wrap" style="margin-top: 0.4rem;">
+          <div class="video-corner tl"></div>
+          <div class="video-corner tr"></div>
+          <div class="video-corner bl"></div>
+          <div class="video-corner br"></div>
+          <div class="scan-overlay" id="scanOverlay"></div>
+          <video id="video" autoplay playsinline muted></video>
+        </div>
+
+        <div class="btn-group">
+          <button id="startBtn" class="btn-primary">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start Recognition
+          </button>
+          <button id="stopBtn" class="btn-danger" disabled>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            Stop
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel-label">Recognition Output</div>
+        <div class="status-box" id="status" style="margin-top: 0.4rem; min-height: 4rem; font-size: 0.9rem;">
+          Awaiting camera initialization...
+        </div>
+
+        <div class="divider" style="margin: 1rem 0;"></div>
+
+        <div class="panel-label" style="margin-bottom: 0.6rem;">Activity Feed</div>
+        <div id="logFeed" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 280px; overflow-y: auto;">
+          <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text3); padding: 0.5rem;">
+            No activity yet.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sys-bar">
+    <div class="sys-item"><div class="sys-dot" id="camDot" style="background: var(--amber);"></div>CAM INIT</div>
+    <div class="sys-item" id="sysMode">MODE: IDLE</div>
+    <div class="sys-item sys-time" id="sysTime">--:--:--</div>
   </div>
 
   <script>
@@ -26,18 +101,43 @@
     const statusBox = document.getElementById('status');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
+    const logFeed = document.getElementById('logFeed');
 
     let intervalId = null;
+    let scanCount = 0, recCount = 0, unkCount = 0;
     const canvas = document.createElement('canvas');
 
-    // Start webcam
+    function tick() {
+      document.getElementById('sysTime').textContent = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    function addLog(msg, type) {
+      const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+      const colors = { recognized: 'var(--green)', unknown: 'var(--red)', info: 'var(--cyan2)', warn: 'var(--amber)' };
+      const div = document.createElement('div');
+      div.style.cssText = `font-family: var(--font-mono); font-size: 0.7rem; color: ${colors[type] || 'var(--text2)'}; padding: 0.35rem 0.5rem; border-left: 2px solid ${colors[type] || 'var(--border)'}; background: rgba(0,0,0,0.2);`;
+      div.textContent = `[${ts}] ${msg}`;
+      if (logFeed.children[0]?.textContent === 'No activity yet.') logFeed.innerHTML = '';
+      logFeed.insertBefore(div, logFeed.firstChild);
+      if (logFeed.children.length > 20) logFeed.removeChild(logFeed.lastChild);
+    }
+
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         video.srcObject = stream;
-        statusBox.textContent = 'Camera ready. Click Start Recognition.';
+        statusBox.textContent = 'Camera ready. Press Start Recognition.';
+        document.getElementById('camDot').style.background = 'var(--green)';
+        document.getElementById('camDot').style.animation = 'none';
+        document.getElementById('camDot').nextSibling.textContent = 'CAM ONLINE';
+        addLog('Camera stream initialized', 'info');
       })
       .catch(() => {
-        statusBox.textContent = '❌ Camera access denied.';
+        statusBox.textContent = 'Camera access denied.';
+        statusBox.className = 'status-box status-unknown';
+        document.getElementById('camDot').style.background = 'var(--red)';
+        document.getElementById('camDot').nextSibling.textContent = 'CAM ERROR';
       });
 
     function captureFrame() {
@@ -48,6 +148,8 @@
     }
 
     async function sendFrame() {
+      scanCount++;
+      document.getElementById('statCount').textContent = scanCount;
       const image = captureFrame();
       try {
         const res = await fetch('/api/recognize', {
@@ -58,8 +160,19 @@
         const data = await res.json();
         statusBox.textContent = data.message;
         statusBox.className = `status-box status-${data.status}`;
+
+        if (data.status === 'recognized') {
+          recCount++;
+          document.getElementById('statRecognized').textContent = recCount;
+          addLog(data.message, 'recognized');
+        } else if (data.status === 'unknown') {
+          unkCount++;
+          document.getElementById('statUnknown').textContent = unkCount;
+          addLog(data.message, 'unknown');
+        }
       } catch (e) {
-        statusBox.textContent = '⚠️ Server error';
+        statusBox.textContent = 'Server error — retrying...';
+        addLog('Server error', 'warn');
       }
     }
 
@@ -67,15 +180,20 @@
       intervalId = setInterval(sendFrame, 2000);
       startBtn.disabled = true;
       stopBtn.disabled = false;
-      statusBox.textContent = 'Recognizing...';
+      statusBox.textContent = 'Scanning...';
+      statusBox.className = 'status-box';
+      document.getElementById('sysMode').textContent = 'MODE: ACTIVE';
+      addLog('Recognition started', 'info');
     };
 
     stopBtn.onclick = () => {
       clearInterval(intervalId);
       startBtn.disabled = false;
       stopBtn.disabled = true;
-      statusBox.textContent = 'Stopped.';
+      statusBox.textContent = 'Recognition stopped.';
       statusBox.className = 'status-box';
+      document.getElementById('sysMode').textContent = 'MODE: IDLE';
+      addLog('Recognition stopped', 'warn');
     };
   </script>
 </body>

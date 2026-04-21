@@ -1,51 +1,154 @@
-<!-- static/attendance.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FaceRoll AI — Attendance Log</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <nav>
-    <a href="/">🎭 Live</a>
-    <a href="/register">➕ Register</a>
-    <a href="/attendance" class="active">📋 Attendance</a>
+    <a href="/" class="nav-logo">FACEROLL<span>/AI</span></a>
+    <a href="/live">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
+      Live
+    </a>
+    <a href="/register">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      Register
+    </a>
+    <a href="/attendance" class="active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      Attendance
+    </a>
   </nav>
 
-  <div class="container">
-    <h1>Attendance Log</h1>
-    <button id="refreshBtn">🔄 Refresh</button>
-    <table>
-      <thead>
-        <tr><th>Name</th><th>Date</th><th>Time</th></tr>
-      </thead>
-      <tbody id="tableBody">
-        <tr><td colspan="3">Loading...</td></tr>
-      </tbody>
-    </table>
+  <div class="container" style="padding-bottom: 3.5rem;">
+    <div class="page-header">
+      <h1>Attendance Log</h1>
+      <p>Identity verification records // sorted by most recent</p>
+    </div>
+
+    <div class="stat-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-label">Total Records</div>
+        <div class="stat-value" id="statTotal">—</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Unique Identities</div>
+        <div class="stat-value" id="statUnique">—</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Today</div>
+        <div class="stat-value" id="statToday">—</div>
+      </div>
+    </div>
+
+    <div class="table-toolbar">
+      <button id="refreshBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-left: 0.5rem;">
+        <label style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase;">Filter</label>
+        <input type="text" id="filterInput" placeholder="Search name..." style="width: 200px; padding: 0.45rem 0.7rem; font-size: 0.75rem;">
+      </div>
+
+      <span class="record-count" id="recordCount">Loading...</span>
+    </div>
+
+    <div class="table-wrap" id="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 40px;">#</th>
+            <th>Identity</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th style="width: 100px;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="5" style="text-align: center; color: var(--text3); padding: 2rem; font-family: var(--font-mono); font-size: 0.75rem;">
+            <span class="blink">_</span> Loading records...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sys-bar">
+    <div class="sys-item"><div class="sys-dot"></div>SYSTEM ONLINE</div>
+    <div class="sys-item" id="lastRefresh">LAST REFRESH: —</div>
+    <div class="sys-item sys-time" id="sysTime">--:--:--</div>
   </div>
 
   <script>
+    let allRecords = [];
+
+    function tick() {
+      document.getElementById('sysTime').textContent = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    function renderTable(records) {
+      const tbody = document.getElementById('tableBody');
+      document.getElementById('recordCount').textContent = `${records.length} record${records.length !== 1 ? 's' : ''}`;
+
+      if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text3); padding: 2rem; font-family: var(--font-mono); font-size: 0.75rem;">No records match filter.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = records.map((r, i) => `
+        <tr>
+          <td style="color: var(--text3); font-family: var(--font-mono); font-size: 0.7rem;">${String(i + 1).padStart(3, '0')}</td>
+          <td class="td-name">${escHtml(r.Name)}</td>
+          <td class="td-date">${escHtml(r.Date)}</td>
+          <td class="td-time">${escHtml(r.Time)}</td>
+          <td><span class="badge badge-green">Verified</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
     async function loadAttendance() {
       const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text3); padding: 2rem; font-family: var(--font-mono); font-size: 0.75rem;"><span class="blink">_</span> Fetching records...</td></tr>`;
+
       try {
         const res = await fetch('/api/attendance');
         const data = await res.json();
-        if (data.records.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="3">No records yet.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = data.records
-          .map(r => `<tr><td>${r.Name}</td><td>${r.Date}</td><td>${r.Time}</td></tr>`)
-          .join('');
+        allRecords = data.records || [];
+
+        // Stats
+        document.getElementById('statTotal').textContent = allRecords.length;
+        const unique = new Set(allRecords.map(r => r.Name)).size;
+        document.getElementById('statUnique').textContent = unique;
+        const today = new Date().toLocaleDateString('en-GB');
+        const todayCount = allRecords.filter(r => r.Date === today).length;
+        document.getElementById('statToday').textContent = todayCount;
+
+        renderTable(allRecords);
+        document.getElementById('lastRefresh').textContent = `LAST REFRESH: ${new Date().toLocaleTimeString('en-GB', { hour12: false })}`;
       } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="3">⚠️ Error loading data.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--red); padding: 2rem; font-family: var(--font-mono); font-size: 0.75rem;">Error loading data.</td></tr>`;
       }
     }
 
     document.getElementById('refreshBtn').onclick = loadAttendance;
+
+    document.getElementById('filterInput').addEventListener('input', function() {
+      const q = this.value.trim().toLowerCase();
+      const filtered = q ? allRecords.filter(r => r.Name.toLowerCase().includes(q)) : allRecords;
+      renderTable(filtered);
+    });
+
     loadAttendance();
   </script>
 </body>
