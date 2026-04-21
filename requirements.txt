@@ -1,20 +1,13 @@
-# --- Web Server & API ---
+# requirements.txt
 fastapi
-uvicorn
-jinja2
+uvicorn[standard]
 python-multipart
-
-# --- Core Data & Vision ---
 numpy
 pandas
-opencv-python
-
-# --- Deep Learning & Face Recognition ---
+opencv-python-headless
 tensorflow
 keras
 deepface
 mtcnn
 retina-face
-
-# --- Stability Patches ---
 protobuf

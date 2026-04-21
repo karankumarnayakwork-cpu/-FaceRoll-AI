@@ -1,0 +1,128 @@
+<!-- static/register.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FaceRoll AI — Register</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav>
+    <a href="/">🎭 Live</a>
+    <a href="/register" class="active">➕ Register</a>
+    <a href="/attendance">📋 Attendance</a>
+  </nav>
+
+  <div class="container">
+    <h1>Register New Face</h1>
+    <input type="text" id="nameInput" placeholder="Full Name">
+    <input type="text" id="phoneInput" placeholder="Phone Number">
+
+    <video id="video" autoplay playsinline muted></video>
+
+    <div class="progress" id="progress">
+      <div class="dot active" id="dot0"></div>
+      <div class="dot" id="dot1"></div>
+      <div class="dot" id="dot2"></div>
+      <div class="dot" id="dot3"></div>
+      <div class="dot" id="dot4"></div>
+    </div>
+
+    <div class="status-box" id="status">Enter name and phone, then capture 5 angles.</div>
+
+    <button id="captureBtn">📸 Capture (C)</button>
+    <button id="submitBtn" disabled>✅ Submit Registration</button>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const statusBox = document.getElementById('status');
+    const captureBtn = document.getElementById('captureBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    const instructions = [
+      'Look STRAIGHT at camera',
+      'Turn slightly LEFT',
+      'Turn slightly RIGHT',
+      'Tilt slightly UP',
+      'Smile / Neutral'
+    ];
+
+    const canvas = document.createElement('canvas');
+    let captured = [];
+    let step = 0;
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => { video.srcObject = stream; })
+      .catch(() => { statusBox.textContent = '❌ Camera access denied.'; });
+
+    function updateUI() {
+      for (let i = 0; i < 5; i++) {
+        const dot = document.getElementById(`dot${i}`);
+        dot.className = 'dot' + (i < step ? ' done' : i === step ? ' active' : '');
+      }
+      if (step < 5) {
+        statusBox.textContent = `Step ${step + 1}/5: ${instructions[step]}`;
+      } else {
+        statusBox.textContent = '✅ All 5 captured! Click Submit.';
+        captureBtn.disabled = true;
+        submitBtn.disabled = false;
+      }
+    }
+
+    function captureFrame() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.8);
+    }
+
+    captureBtn.onclick = () => {
+      if (step >= 5) return;
+      captured.push(captureFrame());
+      step++;
+      updateUI();
+    };
+
+    // Also trigger on 'c' key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'c' || e.key === 'C') captureBtn.click();
+    });
+
+    submitBtn.onclick = async () => {
+      const name = document.getElementById('nameInput').value.trim();
+      const phone = document.getElementById('phoneInput').value.trim();
+
+      if (!name || !phone) {
+        statusBox.textContent = '⚠️ Please enter name and phone first.';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      statusBox.textContent = 'Registering...';
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, images: captured })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          statusBox.textContent = `🎉 ${data.message}`;
+          statusBox.className = 'status-box status-recognized';
+        } else {
+          statusBox.textContent = `❌ ${data.detail}`;
+          statusBox.className = 'status-box status-unknown';
+          submitBtn.disabled = false;
+        }
+      } catch (e) {
+        statusBox.textContent = '⚠️ Server error';
+        submitBtn.disabled = false;
+      }
+    };
+
+    updateUI();
+  </script>
+</body>
+</html>

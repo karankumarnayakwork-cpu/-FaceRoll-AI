@@ -1,0 +1,82 @@
+<!-- static/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FaceRoll AI — Live</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav>
+    <a href="/" class="active">🎭 Live</a>
+    <a href="/register">➕ Register</a>
+    <a href="/attendance">📋 Attendance</a>
+  </nav>
+
+  <div class="container">
+    <h1>Live Face Attendance</h1>
+    <video id="video" autoplay playsinline muted></video>
+    <div class="status-box" id="status">Starting camera...</div>
+    <button id="startBtn">Start Recognition</button>
+    <button id="stopBtn" disabled>Stop</button>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const statusBox = document.getElementById('status');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+
+    let intervalId = null;
+    const canvas = document.createElement('canvas');
+
+    // Start webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+        statusBox.textContent = 'Camera ready. Click Start Recognition.';
+      })
+      .catch(() => {
+        statusBox.textContent = '❌ Camera access denied.';
+      });
+
+    function captureFrame() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      return canvas.toDataURL('image/jpeg', 0.8);
+    }
+
+    async function sendFrame() {
+      const image = captureFrame();
+      try {
+        const res = await fetch('/api/recognize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image })
+        });
+        const data = await res.json();
+        statusBox.textContent = data.message;
+        statusBox.className = `status-box status-${data.status}`;
+      } catch (e) {
+        statusBox.textContent = '⚠️ Server error';
+      }
+    }
+
+    startBtn.onclick = () => {
+      intervalId = setInterval(sendFrame, 2000);
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      statusBox.textContent = 'Recognizing...';
+    };
+
+    stopBtn.onclick = () => {
+      clearInterval(intervalId);
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      statusBox.textContent = 'Stopped.';
+      statusBox.className = 'status-box';
+    };
+  </script>
+</body>
+</html>
